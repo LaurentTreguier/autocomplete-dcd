@@ -50,13 +50,16 @@ module.exports =
           completions.push(comp)
 
         when "calltips"
-          args = line.substr(line.indexOf("(") + 1, line.length - 2).split(", ")
+          args = line.substring(line.indexOf("(") + 1, line.length - 1).split(", ")
 
           for i in [0 .. args.length - 1]
             args[i] = "${#{i + 1}:#{args[i]}}"
+          
+          console.log("-" + line + "-")
 
           completions.push(
             snippet: args.join(", ")
+            type: "snippet"
           )
 
         when null
