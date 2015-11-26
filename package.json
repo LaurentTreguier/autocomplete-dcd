@@ -1,0 +1,27 @@
+{
+    "name": "autocomplete-dcd",
+    "main": "./lib/autocomplete-dcd.coffee",
+    "version": "0.1.0",
+    "description": "Autocomplete for the D language using DCD",
+    "keywords": [
+        "autocomplete",
+        "completion",
+        "dlang",
+        "d",
+        "dcd"
+    ],
+    "activationCommands": {},
+    "repository": "https://github.com/LaurentTreguier/autocomplete-dcd",
+    "license": "MIT",
+    "engines": {
+        "atom": ">=1.0.0 <2.0.0"
+    },
+    "dependencies": {},
+    "providedServices": {
+        "autocomplete.provider": {
+            "versions": {
+                "2.0.0": "provide"
+            }
+        }
+    }
+}

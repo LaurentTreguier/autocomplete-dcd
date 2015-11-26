@@ -1,0 +1,18 @@
+module.exports =
+  c: "class"
+  i: "type"
+  s: "type"
+  u: "type"
+  v: "variable"
+  m: "property"
+  k: "keyword"
+  f: "function"
+  g: "type"
+  e: "constant"
+  P: "import"
+  M: "import"
+  a: "value"
+  A: "value"
+  I: null
+  t: "type"
+  T: "value"
