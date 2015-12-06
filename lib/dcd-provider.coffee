@@ -10,7 +10,7 @@ module.exports =
   server: null,
 
   startServer: ->
-    @server = childProcess.spawn("dcd-server")
+    @server = childProcess.spawn("dcd-server", stdio: ["ignore", "ignore", "ignore"])
 
   stopServer: ->
     @server.kill()
@@ -31,36 +31,40 @@ module.exports =
     completions = []
     @getCompletions(request.editor.getText(), @getPosition(request), completions)
 
-  getCompletions: (text, position, completions) ->
+  getCompletions: (text, position, completions, funcName) ->
     client = childProcess.spawn("dcd-client", ["-c" + position])
     reader = readline.createInterface(input: client.stdout)
     completionType = null
+    promises = []
 
     reader.on("line", (line) =>
+      parts = line.split("\t")
+
       switch completionType
         when "identifiers"
-          parts = line.split("\t")
-          comp = type: types[parts[1]]
-
-          if comp.type == "function"
-            comp.snippet = parts[0] + "($1)"
+          if types[parts[1]] == "function"
+            fakeText = @createFunctionContext(text, parts[0])
+            promises.push(@getCompletions(fakeText, fakeText.length, completions, parts[0]))
           else
-            comp.text = parts[0]
-
-          completions.push(comp)
+            completions.push(
+              text: parts[0]
+              type: types[parts[1]]
+            )
 
         when "calltips"
-          args = line.substring(line.indexOf("(") + 1, line.length - 1).split(", ")
+          args = line.substring(line.lastIndexOf("(") + 1, line.length - 1).split(", ")
 
           for i in [0 .. args.length - 1]
             args[i] = "${#{i + 1}:#{args[i]}}"
-          
-          console.log("-" + line + "-")
 
-          completions.push(
-            snippet: args.join(", ")
-            type: "snippet"
-          )
+          comp =
+            snippet: if funcName then funcName + "(" + args.join(", ") + ")$" + args.length + 1 else args.join(", ")
+            type: if funcName then "function" else "snippet"
+
+          if funcName
+            comp.leftLabel = line.substring(0, line.indexOf(" "))
+
+          completions.push(comp)
 
         when null
           completionType = line
@@ -72,6 +76,16 @@ module.exports =
 
     new Promise((resolve) ->
       reader.on("close", ->
-        resolve(completions)
+        Promise.all(promises).then((-> resolve(completions)), resolve)
       )
     )
+
+  createFunctionContext: (text, funcName) ->
+    fakeText = ""
+    reg = /import [^;]+;/g
+    res
+
+    while (res = reg.exec(text)) != null
+      fakeText += res[0]
+
+    fakeText += funcName + "("
