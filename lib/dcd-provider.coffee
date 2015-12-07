@@ -7,7 +7,7 @@ module.exports =
   disableForSelector: ".source.d .comment, .source.d .string"
   inclusionPriority: 1
   excludeLowerPriority: true
-  server: null,
+  server: null
 
   startServer: ->
     @server = childProcess.spawn("dcd-server", stdio: ["ignore", "ignore", "ignore"])
@@ -87,7 +87,6 @@ module.exports =
   createFunctionContext: (text) ->
     fakeText = ""
     reg = /import [^;]+;/g
-    res
 
     while (res = reg.exec(text)) != null
       fakeText += res[0]
