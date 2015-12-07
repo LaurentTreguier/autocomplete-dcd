@@ -36,6 +36,7 @@ module.exports =
     reader = readline.createInterface(input: client.stdout)
     completionType = null
     promises = []
+    fakeContext = null
 
     reader.on("line", (line) =>
       parts = line.split("\t")
@@ -43,7 +44,10 @@ module.exports =
       switch completionType
         when "identifiers"
           if types[parts[1]] == "function"
-            fakeText = @createFunctionContext(text, parts[0])
+            if fakeContext == null
+              fakeContext = @createFunctionContext(text)
+
+            fakeText = fakeContext + parts[0] + "("
             promises.push(@getCompletions(fakeText, fakeText.length, completions, parts[0]))
           else
             completions.push(
@@ -80,12 +84,10 @@ module.exports =
       )
     )
 
-  createFunctionContext: (text, funcName) ->
+  createFunctionContext: (text) ->
     fakeText = ""
     reg = /import [^;]+;/g
     res
 
     while (res = reg.exec(text)) != null
       fakeText += res[0]
-
-    fakeText += funcName + "("

@@ -15,3 +15,6 @@
 ## 1.1.0
 * Changed function completion to provide the complete prototypes of functions
 * Fixed server stderr buffer filling up and making the plugin stopping to work
+
+## 1.1.1
+* (Possibly) improve performance
