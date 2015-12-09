@@ -7,13 +7,12 @@ module.exports =
   disableForSelector: ".source.d .comment, .source.d .string"
   inclusionPriority: 1
   excludeLowerPriority: true
-  server: null
 
   startServer: ->
-    @server = childProcess.spawn("dcd-server", stdio: ["ignore", "ignore", "ignore"])
+    childProcess.spawn("dcd-server", stdio: ["ignore", "ignore", "ignore"])
 
   stopServer: ->
-    @server.kill()
+    childProcess.spawn("dcd-client", ["--shutdown"])
 
   getPosition: (request) ->
     ed = request.editor
@@ -72,6 +71,11 @@ module.exports =
 
         when null
           completionType = line
+    )
+
+    client.on("exit", (code) =>
+      if code
+        @startServer()
     )
 
     client.stdin.setEncoding("utf-8")
