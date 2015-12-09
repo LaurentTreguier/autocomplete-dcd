@@ -18,3 +18,9 @@
 
 ## 1.1.1
 * (Possibly) improve performance
+
+## 1.1.2
+* Fix server variable assigned to wrong object
+
+## 1.1.3
+* Fix DCD server being killed when closing a window and possibly leaving other atom windows without a server to get completion from
