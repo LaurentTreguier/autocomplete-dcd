@@ -9,7 +9,9 @@ module.exports =
   excludeLowerPriority: true
 
   startServer: ->
-    childProcess.spawn("dcd-server", stdio: ["ignore", "ignore", "ignore"])
+    childProcess.spawn("dcd-server", stdio: ["ignore", "ignore", process.stderr]).on("error", (error) ->
+      console.log(error)
+    )
 
   stopServer: ->
     childProcess.spawn("dcd-client", ["--shutdown"])
