@@ -24,3 +24,6 @@
 
 ## 1.1.3
 * Fix DCD server being killed when closing a window and possibly leaving other atom windows without a server to get completion from
+
+## 1.2.0
+* Added partial dub support (dub.sdl files are not supported for now)
