@@ -1,5 +1,6 @@
 childProcess = require("child_process")
 readline = require("readline")
+fs = require("fs")
 types = require("./types")
 
 module.exports =
@@ -9,10 +10,54 @@ module.exports =
   excludeLowerPriority: true
 
   startServer: ->
-    childProcess.spawn("dcd-server", stdio: ["ignore", "ignore", "ignore"])
+    @getDubImports().then((imports) ->
+      for i in [0 .. imports.length - 1]
+        imports[i] = "-I" + imports[i]
+
+      childProcess.spawn("dcd-server", imports, stdio: "ignore")
+    )
 
   stopServer: ->
     childProcess.spawn("dcd-client", ["--shutdown"])
+
+  getDubImports: ->
+    dub = childProcess.spawn("dub", ["list"])
+    reader = readline.createInterface(input: dub.stdout)
+    packages = {}
+    firstLine = true
+    imports = []
+
+    reader.on("line", (line) ->
+      if firstLine
+        firstLine = false
+      else if line.length
+        p = line.substring(0, line.lastIndexOf(":")).trim()
+        i = p.substring(0, p.lastIndexOf(" "))
+        res = line.substring(line.indexOf("/"))
+
+        if not packages[i] or packages[i] < res
+          packages[i] = res
+    )
+
+    new Promise((resolve) ->
+      reader.on("close", ->
+        for name of packages
+          p = packages[name]
+          dubFile = p + "dub.json"
+
+          try
+            fs.accessSync(dubFile, fs.R_OK)
+
+            dub = require(dubFile)
+            dub.sourcePaths ?= ["source", "src"]
+
+            for path in dub.sourcePaths
+              imports.push(p + path)
+          catch err
+
+        resolve(imports)
+      )
+    )
 
   getPosition: (request) ->
     ed = request.editor
