@@ -27,3 +27,6 @@
 
 ## 1.2.0
 * Added partial dub support (dub.sdl files are not supported for now)
+
+## 1.2.1
+* The DCD server doesn't start at Atom startup anymore to prevent unnecessary memory consumption when not editing D language files
