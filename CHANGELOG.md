@@ -33,3 +33,6 @@
 
 ## 1.3.0
 * The DCD server now also add the current project's roots directories to the server's import list if they are dub projects
+
+## 1.3.1
+* Windows compatibility fix

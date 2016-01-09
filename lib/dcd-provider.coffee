@@ -40,7 +40,7 @@ module.exports =
       else if line.length
         p = line.substring(0, line.lastIndexOf(":")).trim()
         i = p.substring(0, p.lastIndexOf(" "))
-        res = line.substring(line.indexOf("/"))
+        res = line.substring(line.lastIndexOf(":") + 2)
 
         if not packages[i] or packages[i] < res
           packages[i] = res
