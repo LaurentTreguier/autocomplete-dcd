@@ -1,7 +1,7 @@
 {
   "name": "autocomplete-dcd",
   "main": "./lib/autocomplete-dcd.coffee",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Autocomplete for the D language using DCD",
   "keywords": [
     "autocomplete",
