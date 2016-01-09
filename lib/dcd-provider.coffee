@@ -27,6 +27,13 @@ module.exports =
     firstLine = true
     imports = []
 
+    for path in atom.project.getPaths()
+      try
+        fs.accessSync(path + "/dub.json")
+        name = path.substring(path.lastIndexOf("/") + 1)
+        packages[name] = path + "/"
+      catch err
+
     reader.on("line", (line) ->
       if firstLine
         firstLine = false

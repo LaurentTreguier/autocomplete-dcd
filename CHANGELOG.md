@@ -30,3 +30,6 @@
 
 ## 1.2.1
 * The DCD server doesn't start at Atom startup anymore to prevent unnecessary memory consumption when not editing D language files
+
+## 1.3.0
+* The DCD server now also add the current project's roots directories to the server's import list if they are dub projects
