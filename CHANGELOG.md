@@ -36,3 +36,6 @@
 
 ## 1.3.1
 * Windows compatibility fix
+
+## 1.4.0
+* dub packages using a dub.sdl file are now used too

@@ -14,6 +14,5 @@ You must have DCD installed on your system and have the `dcd-server` and `dcd-cl
 
 ## TODO
 
-- [ ] Function documentation display
-- [ ] Better dub packages integration
-- [ ] Possible custom DCD commands paths
+- Function documentation display
+- Possible custom DCD commands paths

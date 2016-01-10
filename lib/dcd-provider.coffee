@@ -28,11 +28,12 @@ module.exports =
     imports = []
 
     for path in atom.project.getPaths()
-      try
-        fs.accessSync(path + "/dub.json")
-        name = path.substring(path.lastIndexOf("/") + 1)
-        packages[name] = path + "/"
-      catch err
+      for dubExt in ["json", "sdl"]
+        try
+          fs.accessSync(path + "/dub.#{dubExt}")
+          name = path.substring(path.lastIndexOf("/") + 1)
+          packages[name] = path + "/"
+        catch err
 
     reader.on("line", (line) ->
       if firstLine
@@ -46,25 +47,37 @@ module.exports =
           packages[i] = res
     )
 
-    new Promise((resolve) ->
-      reader.on("close", ->
+    new Promise((resolve) =>
+      reader.on("close", =>
         for name of packages
           p = packages[name]
-          dubFile = p + "dub.json"
 
-          try
-            fs.accessSync(dubFile, fs.R_OK)
+          for dubExt in ["json", "sdl"]
+            dubFile = p + "dub.#{dubExt}"
 
-            dub = require(dubFile)
-            dub.sourcePaths ?= ["source", "src"]
+            try
+              fs.accessSync(dubFile, fs.R_OK)
 
-            for path in dub.sourcePaths
-              imports.push(p + path)
-          catch err
+              if dubExt is "json"
+                dub = require(dubFile)
+              else
+                dub = sourcePaths: @getSourcePaths(fs.readFileSync(dubFile))
+
+              dub.sourcePaths ?= ["source", "src"]
+              console.log(dub.sourcePaths)
+
+              for path in dub.sourcePaths
+                imports.push(p + path)
+            catch err
 
         resolve(imports)
       )
     )
+
+  getSourcePaths: (data) ->
+    res = /^sourcePaths.*$/gm.exec(data)
+
+    if res then res[0].replace(/"/g, "").split(" ").slice(1) else undefined
 
   getPosition: (request) ->
     ed = request.editor
@@ -94,8 +107,8 @@ module.exports =
 
       switch completionType
         when "identifiers"
-          if types[parts[1]] == "function"
-            if fakeContext == null
+          if types[parts[1]] is "function"
+            if fakeContext is null
               fakeContext = @createFunctionContext(text)
 
             fakeText = fakeContext + parts[0] + "("
