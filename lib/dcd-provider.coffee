@@ -125,7 +125,9 @@ module.exports =
             type: if funcName then "function" else "snippet"
 
           if funcName
-            comp.leftLabel = line.slice(0, line.indexOf(" "))
+            ret = line.slice(0, line.indexOf(" "))
+
+            comp.leftLabel = if ret.startsWith(funcName) then "auto" else ret
 
           completions.push(comp)
 
