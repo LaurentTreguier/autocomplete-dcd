@@ -31,7 +31,7 @@ module.exports =
       for dubExt in ["json", "sdl"]
         try
           fs.accessSync(path + "/dub.#{dubExt}")
-          name = path.substring(path.lastIndexOf("/") + 1)
+          name = path.slice(path.lastIndexOf("/") + 1)
           packages[name] = path + "/"
         catch err
 
@@ -39,9 +39,9 @@ module.exports =
       if firstLine
         firstLine = false
       else if line.length
-        p = line.substring(0, line.lastIndexOf(":")).trim()
-        i = p.substring(0, p.lastIndexOf(" "))
-        res = line.substring(line.lastIndexOf(":") + 2)
+        p = line.slice(0, line.lastIndexOf(":")).trim()
+        i = p.slice(0, p.lastIndexOf(" "))
+        res = line.slice(line.lastIndexOf(":") + 2)
 
         if not packages[i] or packages[i] < res
           packages[i] = res
@@ -92,6 +92,7 @@ module.exports =
     charPosition += coords.column
 
   getSuggestions: (request) ->
+    @request = request
     completions = []
     @getCompletions(request.editor.getText(), @getPosition(request), completions)
 
@@ -99,20 +100,15 @@ module.exports =
     client = childProcess.spawn("dcd-client", ["-c" + position])
     reader = readline.createInterface(input: client.stdout)
     completionType = null
-    promises = []
-    fakeContext = null
+    functions = []
 
-    reader.on("line", (line) =>
+    reader.on("line", (line) ->
       parts = line.split("\t")
 
       switch completionType
         when "identifiers"
           if types[parts[1]] is "function"
-            if fakeContext is null
-              fakeContext = @createFunctionContext(text)
-
-            fakeText = fakeContext + parts[0] + "("
-            promises.push(@getCompletions(fakeText, fakeText.length, completions, parts[0]))
+            functions.push(parts[0])
           else
             completions.push(
               text: parts[0]
@@ -120,7 +116,7 @@ module.exports =
             )
 
         when "calltips"
-          args = line.substring(line.lastIndexOf("(") + 1, line.length - 1).split(", ")
+          args = line.slice(line.lastIndexOf("(") + 1, line.length - 1).split(", ")
 
           for i in [0 .. args.length - 1]
             args[i] = "${#{i + 1}:#{args[i]}}"
@@ -130,7 +126,7 @@ module.exports =
             type: if funcName then "function" else "snippet"
 
           if funcName
-            comp.leftLabel = line.substring(0, line.indexOf(" "))
+            comp.leftLabel = line.slice(0, line.indexOf(" "))
 
           completions.push(comp)
 
@@ -147,8 +143,29 @@ module.exports =
     client.stdin.write(text)
     client.stdin.end()
 
-    new Promise((resolve) ->
-      reader.on("close", ->
+    new Promise((resolve) =>
+      reader.on("close", =>
+        promises = []
+
+        if functions.length <= 10
+          for f in functions
+            fakeText = [
+              text.slice(0, position - @request.prefix.length)
+              f
+              "("
+              text.slice(position)
+            ].join("")
+
+            promises.push(
+              @getCompletions(fakeText, position - @request.prefix.length + f.length + 1, completions, f)
+            )
+        else
+          for f in functions
+            completions.push(
+              snippet: f + "($1)"
+              type: "function"
+            )
+
         Promise.all(promises).then((-> resolve(completions)), resolve)
       )
     )
