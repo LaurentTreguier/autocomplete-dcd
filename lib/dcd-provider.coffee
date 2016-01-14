@@ -64,7 +64,6 @@ module.exports =
                 dub = sourcePaths: @getSourcePaths(fs.readFileSync(dubFile))
 
               dub.sourcePaths ?= ["source", "src"]
-              console.log(dub.sourcePaths)
 
               for path in dub.sourcePaths
                 imports.push(p + path)
@@ -172,7 +171,7 @@ module.exports =
 
   createFunctionContext: (text) ->
     fakeText = ""
-    reg = /import [^;]+;/g
+    reg = /import[^;]+;/g
 
     while (res = reg.exec(text)) != null
       fakeText += res[0]
