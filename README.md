@@ -15,4 +15,5 @@ You must have DCD installed on your system and have the `dcd-server` and `dcd-cl
 ## TODO
 
 - Function documentation display
-- Possible custom DCD commands paths
+- Customizable DCD commands paths
+- Customizable function prototype showing threshold

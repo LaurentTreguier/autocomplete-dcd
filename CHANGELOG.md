@@ -39,3 +39,9 @@
 
 ## 1.4.0
 * dub packages using a dub.sdl file are now used too
+
+## 1.5.0
+* Now entire function prototypes are only shown if 10 or less functions are candidates for autocompletion (your computer's processor will be grateful)
+* Fixed the return type shown for auto functions
+* Removed a debug log
+* Fixed a regex that would not detect import statements if they were followed by a tab instead of space(s)
