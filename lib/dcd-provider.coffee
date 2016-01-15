@@ -3,22 +3,47 @@ readline = require("readline")
 fs = require("fs")
 types = require("./types")
 
+packageName = "autocomplete-dcd"
+
 module.exports =
   selector: ".source.d"
   disableForSelector: ".source.d .comment, .source.d .string"
   inclusionPriority: 1
   excludeLowerPriority: true
 
+  updateServerCommand: ->
+    @serverCommand = atom.config.get(packageName + ".dcdServer")
+
+  updateClientCommand: ->
+    @clientCommand = atom.config.get(packageName + ".dcdClient")
+
+  updateProtoThreshold: ->
+    @protoThreshold = atom.config.get(packageName + ".protoThreshold")
+
+  observeConfig: ->
+    atom.config.onDidChange(packageName + ".dcdServer", => @updateServerCommand())
+    atom.config.onDidChange(packageName + ".dcdClient", => @updateClientCommand())
+    atom.config.onDidChange(packageName + ".protoThreshold", => @updateProtoThreshold())
+
+  parseCommand: (line) ->
+    words = line.split(" ")
+
+    prog: words[0]
+    args: words.slice(1)
+
   startServer: ->
-    @getDubImports().then((imports) ->
+    @getDubImports().then((imports) =>
       for i in [0 .. imports.length - 1]
         imports[i] = "-I" + imports[i]
 
-      childProcess.spawn("dcd-server", imports, stdio: "ignore")
+      command = @parseCommand(@serverCommand)
+      childProcess.spawn(command.prog, command.args.concat(imports), stdio: "ignore")
     )
 
   stopServer: ->
-    childProcess.spawn("dcd-client", ["--shutdown"])
+    command = @parseCommand(@clientCommand)
+    command.args.push("--shutdown")
+    childProcess.spawn(command.prog, command.args)
 
   getDubImports: ->
     dub = childProcess.spawn("dub", ["list"])
@@ -96,7 +121,9 @@ module.exports =
     @getCompletions(request.editor.getText(), @getPosition(request), completions)
 
   getCompletions: (text, position, completions, funcName) ->
-    client = childProcess.spawn("dcd-client", ["-c" + position])
+    command = @parseCommand(@clientCommand)
+    command.args.push("-c" + position)
+    client = childProcess.spawn(command.prog, command.args)
     reader = readline.createInterface(input: client.stdout)
     completionType = null
     functions = []
@@ -148,7 +175,7 @@ module.exports =
       reader.on("close", =>
         promises = []
 
-        if functions.length <= 10
+        if @protoThreshold < 0 or functions.length <= (@protoThreshold)
           for f in functions
             fakeText = [
               text.slice(0, position - @request.prefix.length)
@@ -170,10 +197,3 @@ module.exports =
         Promise.all(promises).then((-> resolve(completions)), resolve)
       )
     )
-
-  createFunctionContext: (text) ->
-    fakeText = ""
-    reg = /import[^;]+;/g
-
-    while (res = reg.exec(text)) != null
-      fakeText += res[0]
