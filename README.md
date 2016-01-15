@@ -4,7 +4,7 @@ Autocomplete provider for the D language using the [D Completion Daemon](https:/
 
 ## Prerequisites
 
-You must have DCD installed on your system and have the `dcd-server` and `dcd-client` commands in your PATH.
+You must have DCD installed on your system. The `dcd-server` and `dcd-client` launching commands can either be in your PATH or explicitly specified.
 
 ## Usage
 
@@ -15,5 +15,3 @@ You must have DCD installed on your system and have the `dcd-server` and `dcd-cl
 ## TODO
 
 - Function documentation display
-- Customizable DCD commands paths
-- Customizable function prototype showing threshold

@@ -45,3 +45,6 @@
 * Fixed the return type shown for auto functions
 * Removed a debug log
 * Fixed a regex that would not detect import statements if they were followed by a tab instead of space(s)
+
+## 1.6.0
+* Added settings for custom DCD commands and function prototype showing threshold
