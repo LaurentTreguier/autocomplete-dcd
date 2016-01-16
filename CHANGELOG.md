@@ -48,3 +48,6 @@
 
 ## 1.6.0
 * Added settings for custom DCD commands and function prototype showing threshold
+
+## 1.6.1
+* Fixed arguments when completing template functions and when arguments have parenthesis (i.e. const(char))
