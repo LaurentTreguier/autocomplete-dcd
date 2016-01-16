@@ -142,7 +142,9 @@ module.exports =
             )
 
         when "calltips"
-          args = line.slice(line.lastIndexOf("(") + 1, line.length - 1).split(", ")
+          template = line.match(/[^)]*\)\s*\(/)
+          start = template[0].length - 1 if template
+          args = line.slice(line.indexOf("(", start) + 1, line.length - 1).split(", ")
 
           for i in [0 .. args.length - 1]
             args[i] = "${#{i + 1}:#{args[i]}}"
