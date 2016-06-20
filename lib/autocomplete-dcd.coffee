@@ -6,6 +6,7 @@ module.exports =
   activate: ->
     provider.updateServerCommand()
     provider.updateClientCommand()
+    provider.updateDubCommand()
     provider.updateProtoThreshold()
     provider.observeConfig()
 

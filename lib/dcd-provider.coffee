@@ -17,12 +17,16 @@ module.exports =
   updateClientCommand: ->
     @clientCommand = atom.config.get(packageName + ".dcdClient")
 
+  updateDubCommand: ->
+    @dubCommand = atom.config.get(packageName + ".dub")
+
   updateProtoThreshold: ->
     @protoThreshold = atom.config.get(packageName + ".protoThreshold")
 
   observeConfig: ->
     atom.config.onDidChange(packageName + ".dcdServer", => @updateServerCommand())
     atom.config.onDidChange(packageName + ".dcdClient", => @updateClientCommand())
+    atom.config.onDidChange(packageName + ".dub", => @updateDubCommand())
     atom.config.onDidChange(packageName + ".protoThreshold", => @updateProtoThreshold())
 
   parseCommand: (line) ->
@@ -46,7 +50,9 @@ module.exports =
     childProcess.spawn(command.prog, command.args)
 
   getDubImports: ->
-    dub = childProcess.spawn("dub", ["list"])
+    command = @parseCommand(@dubCommand)
+    command.args.push("list")
+    dub = childProcess.spawn(command.prog, command.args)
     reader = readline.createInterface(input: dub.stdout)
     packages = {}
     firstLine = true
