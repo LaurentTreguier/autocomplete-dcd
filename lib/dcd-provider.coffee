@@ -175,9 +175,7 @@ module.exports =
         @startServer()
     )
 
-    client.stdin.setEncoding("utf-8")
-    client.stdin.write(text)
-    client.stdin.end()
+    client.stdin.end(text, "ascii")
 
     new Promise((resolve) =>
       reader.on("close", =>
