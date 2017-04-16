@@ -1,21 +1,39 @@
 module.exports =
+  dmdConf:
+    title: "Path to the dmd config file"
+    description: "The command to execute to launch dub"
+    type: "object"
+    properties:
+      darwin:
+        title: "MacOS path"
+        type: "string"
+        default: "/usr/local/etc/dmd.conf"
+      linux:
+        title: "Linux path"
+        type: "string"
+        default: "/etc/dmd.conf"
+      win32:
+        title: "Windows path"
+        type: "string"
+        default: "C:\\D\\dmd2\\windows\\bin\\sc.ini"
+
+  dub:
+    title: "dub command"
+    description: "The command to execute to launch dub"
+    type: "string"
+    default: "dub"
+
   dcdServer:
     title: "DCD server command"
     description: "The command to execute to launch the DCD server"
     type: "string"
-    default: "dcd-server"
+    default: ""
 
   dcdClient:
     title: "DCD client command"
     description: "The command to execute to launch DCD clients"
     type: "string"
-    default: "dcd-client"
-
-  dub:
-    title: "dub client command"
-    description: "The command to execute to launch dub"
-    type: "string"
-    default: "dub"
+    default: ""
 
   protoThreshold:
     title: "Function prototype threshold"

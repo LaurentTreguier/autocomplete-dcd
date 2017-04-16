@@ -1,6 +1,7 @@
 childProcess = require("child_process")
 readline = require("readline")
 fs = require("fs")
+path = require("path")
 types = require("./types")
 
 packageName = "autocomplete-dcd"
@@ -10,24 +11,8 @@ module.exports =
   disableForSelector: ".source.d .comment, .source.d .string"
   inclusionPriority: 1
   excludeLowerPriority: true
-
-  updateServerCommand: ->
-    @serverCommand = atom.config.get(packageName + ".dcdServer")
-
-  updateClientCommand: ->
-    @clientCommand = atom.config.get(packageName + ".dcdClient")
-
-  updateDubCommand: ->
-    @dubCommand = atom.config.get(packageName + ".dub")
-
-  updateProtoThreshold: ->
-    @protoThreshold = atom.config.get(packageName + ".protoThreshold")
-
-  observeConfig: ->
-    atom.config.onDidChange(packageName + ".dcdServer", => @updateServerCommand())
-    atom.config.onDidChange(packageName + ".dcdClient", => @updateClientCommand())
-    atom.config.onDidChange(packageName + ".dub", => @updateDubCommand())
-    atom.config.onDidChange(packageName + ".protoThreshold", => @updateProtoThreshold())
+  serverCommand: "dcd-server"
+  clientCommand: "dcd-client"
 
   parseCommand: (line) ->
     words = line.split(" ")
@@ -36,21 +21,83 @@ module.exports =
     args: words.slice(1)
 
   startServer: ->
-    @getDubImports().then((imports) =>
-      for i in [0 .. imports.length - 1]
-        imports[i] = "-I" + imports[i]
-
-      command = @parseCommand(@serverCommand)
-      childProcess.spawn(command.prog, command.args.concat(imports), stdio: "ignore")
-    )
+    atom.notifications.addInfo("Starting DCD server")
+    Promise.all([@getDmdImports(), @getDubImports()])
+      .then((importsResults) -> importsResults.reduce((a, b) -> a.concat(b)))
+      .then((imports) =>
+        command = @parseCommand(atom.config.get(packageName + ".dcdServer") or @serverCommand)
+        childProcess.spawn(command.prog, command.args.concat(imports), stdio: "ignore")
+      )
 
   stopServer: ->
-    command = @parseCommand(@clientCommand)
+    command = @parseCommand(atom.config.get(packageName + ".dcdClient") or @clientCommand)
     command.args.push("--shutdown")
     childProcess.spawn(command.prog, command.args)
 
+  installDcd: ->
+    command = @parseCommand(atom.config.get(packageName + ".dub"))
+
+    new Promise((resolve) ->
+      search = childProcess.spawn(command.prog, command.args.concat(["search", "dcd"]))
+      reader = readline.createInterface(input: search.stdout)
+
+      reader.on("line", (line) =>
+        match = line.match(/dcd\s+\((\S+)\)/)
+        if match then resolve(match[1])
+      )
+    ).then((version) -> new Promise((resolve) ->
+      childProcess.spawn(command.prog, command.args.concat(["fetch", "dcd", "--version", version]))
+        .on("exit", resolve)
+    )).then(=> new Promise((resolve) =>
+      list = childProcess.spawn(command.prog, command.args.concat(["list"]))
+      reader = readline.createInterface(input: list.stdout)
+      version = ""
+      dubPath = ""
+
+      reader.on("line", (line) =>
+        match = line.match(/\s*dcd\s+(\S+?):\s+(.+)/)
+
+        if match and not (match[1] is "~master") and (match[1] > version)
+          version = match[1]
+          dubPath = match[2]
+          @serverCommand = path.join(dubPath, "dcd-server")
+          @clientCommand = path.join(dubPath, "dcd-client")
+      )
+
+      reader.on("close", -> resolve(dubPath))
+    )).then((dubPath) => new Promise((resolve) =>
+      try
+        fs.accessSync(@serverCommand, fs.R_OK)
+      catch error
+        atom.notifications.addInfo("Building DCD server")
+        childProcess.spawn(command.prog, command.args.concat(["build", "--build", "release", "--config", "server"]), cwd: dubPath)
+          .on("exit", (code) ->
+            if not code
+              atom.notifications.addSuccess("Built DCD server")
+              resolve(dubPath)
+          )
+    )).then((dubPath) => new Promise((resolve) =>
+      try
+        fs.accessSync(@clientCommand)
+      catch error
+        atom.notifications.addInfo("Building DCD client")
+        childProcess.spawn(command.prog, command.args.concat(["build", "--build", "release", "--config", "client"]), cwd: dubPath)
+          .on("exit", (code) ->
+            if not code
+              atom.notifications.addSuccess("Built DCD client")
+              resolve()
+          )
+    ))
+
+  getDmdImports: ->
+    new Promise((resolve) ->
+      fs.readFile(atom.config.get(packageName + ".dmdConf." + process.platform), (err, data) ->
+        if not err
+          resolve(data.toString().match(/-I\S+/g))
+    ))
+
   getDubImports: ->
-    command = @parseCommand(@dubCommand)
+    command = @parseCommand(atom.config.get(packageName + ".dub"))
     command.args.push("list")
     dub = childProcess.spawn(command.prog, command.args)
     reader = readline.createInterface(input: dub.stdout)
@@ -61,7 +108,7 @@ module.exports =
     for path in atom.project.getPaths()
       for dubExt in ["json", "sdl"]
         try
-          fs.accessSync(path + "/dub.#{dubExt}")
+          fs.accessSync(path + "/dub.#{dubExt}", fs.R_OK)
           name = path.slice(path.lastIndexOf("/") + 1)
           packages[name] = path + "/"
         catch err
@@ -100,7 +147,7 @@ module.exports =
                 imports.push(p + path)
             catch err
 
-        resolve(imports)
+        resolve(imports.map((i) -> "-I" + i))
       )
     )
 
@@ -127,7 +174,7 @@ module.exports =
     @getCompletions(request.editor.getText(), @getPosition(request), completions)
 
   getCompletions: (text, position, completions, funcName) ->
-    command = @parseCommand(@clientCommand)
+    command = @parseCommand(atom.config.get(packageName + ".dcdClient") or @clientCommand)
     command.args.push("-c" + position)
     client = childProcess.spawn(command.prog, command.args)
     reader = readline.createInterface(input: client.stdout)
@@ -180,8 +227,9 @@ module.exports =
     new Promise((resolve) =>
       reader.on("close", =>
         promises = []
+        protoThreshold = atom.config.get(packageName + ".protoThreshold")
 
-        if @protoThreshold < 0 or functions.length <= (@protoThreshold)
+        if protoThreshold < 0 or functions.length <= protoThreshold
           for f in functions
             fakeText = [
               text.slice(0, position - @request.prefix.length)

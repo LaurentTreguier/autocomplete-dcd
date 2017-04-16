@@ -4,13 +4,10 @@ module.exports =
   config: require("./config")
 
   activate: ->
-    provider.updateServerCommand()
-    provider.updateClientCommand()
-    provider.updateDubCommand()
-    provider.updateProtoThreshold()
-    provider.observeConfig()
+    provider.installDcd()
 
   deactivate: ->
     provider.stopServer()
 
-  provide: -> provider
+  provide: ->
+    provider
