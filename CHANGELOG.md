@@ -51,3 +51,12 @@
 
 ## 1.6.1
 * Fixed arguments when completing template functions and when arguments have parenthesis (i.e. const(char))
+
+## 1.7.0
+* Dub path is now configurable
+
+## 1.7.1
+* Fixed a byte counting bug with non-ascii characters
+
+## 1.8.0
+* DCD installation is now managed by the extension, with optional manual installation and configuration
