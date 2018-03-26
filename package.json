@@ -1,7 +1,7 @@
 {
   "name": "autocomplete-dcd",
   "main": "./lib/autocomplete-dcd",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Autocomplete for the D language using DCD",
   "keywords": [
     "autocomplete",
